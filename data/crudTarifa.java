@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import javax.swing.JOptionPane;
 import java.sql.Date;
+import java.util.ArrayList;
 
 /**
  *
@@ -50,6 +51,40 @@ public class crudTarifa {
             } else {
                 return list;
             }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e);
+            return null;
+        }
+    }
+
+    public static ArrayList<tarifa> getAllTarifas(usuario currentUsser) {
+        ArrayList<tarifa> list = new ArrayList<>();
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = credentials.getConnector(currentUsser);
+            //here sonoo is database name, root is username and password 
+            PreparedStatement ps
+                    = con.prepareStatement("select "
+                            + "idtarifa,"
+                            + " fechaInicio,"
+                            + " fechaFin,"
+                            + " valor,"
+                            + " ramal_idramal from tarifa"
+                    );
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                tarifa t = new tarifa();
+                t.setIdtarifa(rs.getInt(1));
+                t.setFechaInicio(rs.getDate(2));
+                if (rs.getDate(3) != null) {
+                    t.setFechaFin(rs.getDate(3));
+                }
+                t.setValor(rs.getDouble(4));
+                t.setRamal_idramal(rs.getInt(5));
+                list.add(t);
+            }
+            con.close();
+            return list;
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e);
             return null;

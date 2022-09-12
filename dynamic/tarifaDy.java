@@ -7,6 +7,7 @@ package dynamic;
 import entity.ramal;
 import entity.tarifa;
 import entity.usuario;
+import java.util.ArrayList;
 import javax.swing.JOptionPane;
 
 /**
@@ -15,8 +16,11 @@ import javax.swing.JOptionPane;
  */
 public class tarifaDy {
 
-    public static tarifa getAllRamales(usuario currentUsser, ramal r) {
+    public static tarifa getMaxTarifa(usuario currentUsser, ramal r) {
         return data.crudTarifa.getMaxTarifa(currentUsser, r);
+    }
+    public static ArrayList<tarifa> getAllTarifas(usuario currentUsser) {
+        return data.crudTarifa.getAllTarifas(currentUsser);
     }
 
     public static boolean add(usuario currentUsser, tarifa nuevaTarifa, tarifa viejaTarifa) {
