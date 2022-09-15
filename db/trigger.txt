@@ -37,4 +37,40 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `conteo_BEFORE_INSERT` BEFORE INSERT O
 END$$
 DELIMITER ;
 
+using cursor
+SET @ramalList = ""; 
+CALL createRamalList(@ramalList); 
+SELECT @ramalList;
+DELIMITER $$
+CREATE PROCEDURE createRamalList (
+	INOUT ramalList varchar(4000)
+)
+BEGIN
+	DECLARE finished INTEGER DEFAULT 0;
+	DECLARE ramalNombre varchar(100) DEFAULT "";
+
+	-- declare cursor for employee email
+	DEClARE curRamal 
+		CURSOR FOR 
+			SELECT nombre FROM ramal;
+
+	-- declare NOT FOUND handler
+	DECLARE CONTINUE HANDLER 
+        FOR NOT FOUND SET finished = 1;
+
+	OPEN curRamal;
+
+	getRamal: LOOP
+		FETCH curRamal INTO ramalNombre;
+		IF finished = 1 THEN 
+			LEAVE getRamal;
+		END IF;
+		-- build email list
+		SET ramalList = CONCAT(ramalNombre,";",ramalList);
+	END LOOP getRamal;
+	CLOSE curRamal;
+
+END$$
+DELIMITER ;
+
 select *from conteo
