@@ -1,0 +1,40 @@
+set @fecha = "2010-09-01";
+set @idRmal = 1;
+set @valor = getActualValorFromTarifa(@fecha,@idRmal);
+set @totlm=20;
+set @totap= @valor*@totlm;
+select @totap as valor
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` FUNCTION `getActualValorFromTarifa`(fechaConteo date, idRmal int) RETURNS float
+    DETERMINISTIC
+BEGIN
+declare valorTarifa float default 0.0;
+set valorTarifa = (select valor from mydb.tarifa where
+		 ramal_idramal = idRmal and
+		 (((fechainicio <= fechaConteo
+		 and fechafin is not null) 
+		 and fechaConteo between fechainicio and fechafin) or
+		 ((fechainicio <= fechaConteo
+		 and fechafin is null)
+		 and fechaConteo between fechainicio and curdate())));
+return valorTarifa;
+END$$
+DELIMITER ;
+
+
+DROP TRIGGER IF EXISTS `mydb`.`conteo_BEFORE_INSERT`;
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` TRIGGER `conteo_BEFORE_INSERT` BEFORE INSERT ON `conteo` FOR EACH ROW BEGIN
+	set @fecha = new.fechaConteo;
+	set @idRmal = (select idramal from ramal where nombre = new.ramal);
+	set @valor = getActualValorFromTarifa(@fecha,@idRmal);
+    if @valor is not null then
+    set new.totalPagar = @valor * new.totalMarcas;
+    end if;
+    
+END$$
+DELIMITER ;
+
+select *from conteo
