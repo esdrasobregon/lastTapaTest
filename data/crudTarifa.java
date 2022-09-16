@@ -33,7 +33,8 @@ public class crudTarifa {
                             + " fechaFin,"
                             + " valor,"
                             + " ramal_idramal from tarifa"
-                            + " where ramal_idramal = ?"
+                            + " where fechafin is null and"
+                            + " ramal_idramal = ?"
                     );
             ps.setInt(1, r.getIdramal());
             ResultSet rs = ps.executeQuery();

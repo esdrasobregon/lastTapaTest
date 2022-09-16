@@ -12,10 +12,15 @@ import entity.usuario;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerDateModel;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
@@ -31,7 +36,7 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
     private usuario currentUsser;
     private ArrayList<ramal> listaRamales;
     private ArrayList<ramal> ramalesParaAgregarTarifa;
-    private ArrayList<tarifa> listaTarifas;
+    private ArrayList<tarifa> listaMaxTarifas;
     private ArrayList<tarifa> allTarifas;
     /**
      * Creates new form mantenimientoTarifas
@@ -54,14 +59,22 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
         this.ramalesParaAgregarTarifa = new ArrayList<>();
         this.manejoListaUn = new manejadorLlistaUnidades();
         this.listaRamales = ramalDy.getAllRamales(currentUsser);
-        this.allTarifas = tarifaDy.getAllTarifas(currentUsser);
-        this.lbTotalTarifas.setText("TOTAL DE TARIFAS: " + this.allTarifas.size());
+        //this.lbTotalTarifas.setText("TOTAL DE TARIFAS: " + this.allTarifas.size());
+        getCurrentTarifas();
         LoopRamalesToAddRow();
         //testTbRamales();
-        getCurrentTarifas();
+
         addListenerToTheTableRamales();
         this.pnlloading.setVisible(false);
         justNumbers(txtValor, 5);
+    }
+
+    private void setTbRamalesValorCol() {
+
+        for (int j = 0; j < this.listaRamales.size(); j++) {
+            tarifa t = getTarifaFromMaxTarifa(this.listaRamales.get(j).getIdramal());
+            this.tbRamales.setValueAt(t.getValor(), j, 1);
+        }
     }
 
     private void showHistorial() {
@@ -92,21 +105,38 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
     }
 
     private void getCurrentTarifas() {
-        this.listaTarifas = new ArrayList<>();
+        this.allTarifas = tarifaDy.getAllTarifas(currentUsser);
+        this.listaMaxTarifas = new ArrayList<>();
         this.listaRamales.forEach(e -> {
             tarifa t = tarifaDy.getMaxTarifa(currentUsser, e);
             if (t != null) {
-                System.out.println("tarifa ramal: " + t.getIdtarifa());
-                this.listaTarifas.add(t);
+                System.out.println("tarifa ramal: " + t.getValor());
+                this.listaMaxTarifas.add(t);
             } else {
                 System.out.println("nulo");
             }
         });
     }
 
+    private tarifa getTarifaFromMaxTarifa(int idramal) {
+        tarifa t = null;
+        int count = 0;
+        boolean found = false;
+        while (!found && count < this.listaMaxTarifas.size()) {
+            if (this.listaMaxTarifas.get(count).getRamal_idramal() == idramal) {
+                found = true;
+                t = this.listaMaxTarifas.get(count);
+            }
+            count++;
+        }
+        return t;
+    }
+
     private void LoopRamalesToAddRow() {
         this.listaRamales.forEach(e -> {
-            addRowToTheTableRamales(e);
+            tarifa t = getTarifaFromMaxTarifa(e.getIdramal());
+
+            addRowToTheTableRamales(e, t);
         });
     }
 
@@ -158,7 +188,7 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
     private void unSelectTable() {
         DefaultTableModel model = (DefaultTableModel) this.tbRamales.getModel();
         for (int i = 0; i < this.tbRamales.getRowCount(); i++) {
-            model.setValueAt(false, i, 1);
+            model.setValueAt(false, i, 2);
         }
     }
 
@@ -168,11 +198,18 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
         tc.setCellRenderer(this.tbRamales.getDefaultRenderer(Boolean.class));
     }
 
-    private void addRowToTheTableRamales(ramal un) {
+    private void addRowToTheTableRamales(ramal un, tarifa t) {
 
         DefaultTableModel model = (DefaultTableModel) this.tbRamales.getModel();
-        model.addRow(new Object[]{
-            un.getNombre()});
+        if (t != null) {
+            model.addRow(new Object[]{
+                un.getNombre(),
+                t.getValor()});
+        } else {
+            model.addRow(new Object[]{
+                un.getNombre()});
+        }
+
     }
 
     private void addRowToTheTableHistorial(tarifa un) {
@@ -442,7 +479,7 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 835, Short.MAX_VALUE)
+            .addGap(0, 651, Short.MAX_VALUE)
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -458,7 +495,7 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 835, Short.MAX_VALUE)
+            .addGap(0, 651, Short.MAX_VALUE)
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -478,7 +515,7 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 47, Short.MAX_VALUE)
+            .addGap(0, 44, Short.MAX_VALUE)
         );
 
         top.add(jPanel7, java.awt.BorderLayout.LINE_END);
@@ -494,7 +531,7 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 47, Short.MAX_VALUE)
+            .addGap(0, 44, Short.MAX_VALUE)
         );
 
         top.add(jPanel8, java.awt.BorderLayout.LINE_START);
@@ -527,7 +564,7 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
         );
         rigthLayout.setVerticalGroup(
             rigthLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 502, Short.MAX_VALUE)
+            .addGap(0, 602, Short.MAX_VALUE)
         );
 
         getContentPane().add(rigth, java.awt.BorderLayout.LINE_END);
@@ -543,14 +580,14 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Ramal", "Select"
+                "Ramal", "VALOR ACTUAL", "SELECCIONAR"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Object.class, java.lang.Boolean.class
+                java.lang.Object.class, java.lang.Object.class, java.lang.Boolean.class
             };
             boolean[] canEdit = new boolean [] {
-                false, true
+                false, false, true
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -566,7 +603,8 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
         if (tbRamales.getColumnModel().getColumnCount() > 0) {
             tbRamales.getColumnModel().getColumn(0).setResizable(false);
             tbRamales.getColumnModel().getColumn(1).setResizable(false);
-            tbRamales.getColumnModel().getColumn(1).setPreferredWidth(30);
+            tbRamales.getColumnModel().getColumn(2).setResizable(false);
+            tbRamales.getColumnModel().getColumn(2).setPreferredWidth(30);
         }
 
         left.add(jScrollPane1, java.awt.BorderLayout.CENTER);
@@ -620,7 +658,7 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
 
     private void loadRamalesWithNewTarifa() {
         for (int i = 0; i < this.tbRamales.getRowCount(); i++) {
-            if (isSelected(i, 1)) {
+            if (isSelected(i, 2)) {
                 JOptionPane.showMessageDialog(null, "selected at: " + i);
 
             }
@@ -653,19 +691,21 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
         // TODO add your handling code here:
         if (formTarifasOK()) {
             if (this.ramalesParaAgregarTarifa.size() > 0) {
+                tarifa nuevaTarifa = getTarifaFromTheForm();
                 this.ramalesParaAgregarTarifa.forEach(e -> {
                     tarifa viejaTarifa = getTarifaActual(e);
-                    tarifa nuevaTarifa = getTarifaFromTheForm();
+
                     nuevaTarifa.setRamal_idramal(e.getIdramal());
                     addTarifa(nuevaTarifa, viejaTarifa);
 
                 });
                 // clearTbRamales();
                 unSelectTable();
-                this.ramalesParaAgregarTarifa = new ArrayList<>();
+                getCurrentTarifas();
+                setTbRamalesValorCol();
+                this.ramalesParaAgregarTarifa.removeAll(ramalesParaAgregarTarifa);
                 this.lbSelectRamales.setText("Ramales seleccionados: " + this.ramalesParaAgregarTarifa.size());
 
-                getCurrentTarifas();
             } else {
                 JOptionPane.showMessageDialog(null, "No hay ramales seleccionados ");
             }
@@ -691,7 +731,7 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
             boolean result = dynamic.tarifaDy.add(currentUsser, nuevaTarifa, viejaTarifa);
             if (result) {
 
-                JOptionPane.showMessageDialog(null, "hecho");
+                System.out.println("add tarifa successfully " + nuevaTarifa.getValor());
 
             }
 
@@ -741,10 +781,10 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
         tarifa t = null;
         int count = 0;
         boolean found = false;
-        while (!found & count < this.listaTarifas.size()) {
-            if (r.getIdramal() == this.listaTarifas.get(count).getRamal_idramal()) {
+        while (!found & count < this.listaMaxTarifas.size()) {
+            if (r.getIdramal() == this.listaMaxTarifas.get(count).getRamal_idramal()) {
                 found = true;
-                t = this.listaTarifas.get(count);
+                t = this.listaMaxTarifas.get(count);
             }
             count++;
         }
@@ -754,8 +794,8 @@ public class mantenimientoTarifas extends javax.swing.JFrame {
     private boolean existeTarifaActual(ramal r) {
         int count = 0;
         boolean found = false;
-        while (!found & count < this.listaTarifas.size()) {
-            if (r.getIdramal() == this.listaTarifas.get(count).getRamal_idramal()) {
+        while (!found & count < this.listaMaxTarifas.size()) {
+            if (r.getIdramal() == this.listaMaxTarifas.get(count).getRamal_idramal()) {
                 found = true;
 
             }
